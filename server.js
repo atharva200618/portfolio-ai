@@ -1,10 +1,9 @@
 /*************************************************
  *  SERVER.JS – AI BACKEND FOR PORTFOLIO ASSISTANT
- *  Author: Atharva Portfolio Backend
+ *  Author: Atharva
  *  Purpose:
- *  - Handle AI chat requests
- *  - Respect frontend systemPrompt (dual-brain)
- *  - Provide safety, structure & memory
+ *  - AI chat backend
+ *  - Works with GitHub Pages + Render
  *************************************************/
 
 import express from "express";
@@ -12,82 +11,56 @@ import cors from "cors";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
 
-/* ================================================
-   1. ENVIRONMENT SETUP
-================================================ */
+/* =================================================
+   1. ENV SETUP
+================================================= */
 dotenv.config();
 
 if (!process.env.GROQ_API_KEY) {
-  console.error("❌ GROQ_API_KEY missing in .env");
+  console.error("❌ GROQ_API_KEY is missing");
   process.exit(1);
 }
 
-/* ================================================
-   2. APP INITIALIZATION
-================================================ */
+/* =================================================
+   2. APP INIT
+================================================= */
 const app = express();
+app.set("trust proxy", 1);
 
-/* ---------- Middlewares ---------- */
-app.use(cors({
-  origin: "*", // later restrict to domain
-  methods: ["POST", "GET"],
-}));
+/* =================================================
+   3. MIDDLEWARES
+================================================= */
+app.use(
+  cors({
+    origin: "*", // GitHub Pages safe
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
 app.use(express.json({ limit: "1mb" }));
 
-/* ================================================
-   3. AI CLIENT INITIALIZATION
-================================================ */
+/* =================================================
+   4. GROQ CLIENT
+================================================= */
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-/* ================================================
-   4. IN-MEMORY SESSION MEMORY
-   (Frontend already limits memory visually)
-================================================ */
+/* =================================================
+   5. SIMPLE MEMORY (SAFE)
+================================================= */
 const chatMemory = [];
-const MAX_MEMORY_MESSAGES = 6;
+const MAX_MEMORY = 6;
 
-/**
- * Save message safely into memory
- */
-function pushToMemory(role, content) {
+function pushMemory(role, content) {
   chatMemory.push({ role, content });
-
-  if (chatMemory.length > MAX_MEMORY_MESSAGES) {
-    chatMemory.shift();
-  }
+  if (chatMemory.length > MAX_MEMORY) chatMemory.shift();
 }
 
-/* ================================================
-   5. RESPONSE QUALITY ENFORCER
-   (FINAL SAFETY NET – frontend already formats)
-================================================ */
-function enforceMarkdownStructure(text) {
-  if (!text) return "";
-
-  // If AI already structured → return as-is
-  const structured =
-    text.includes("##") ||
-    text.includes("- ") ||
-    text.includes("**");
-
-  if (structured) return text;
-
-  // Convert plain text → bullets
-  const lines = text.split(/[.?!]\s+/).filter(Boolean);
-
-  let output = "## 📌 Response\n\n";
-  for (const line of lines) {
-    output += `- ${line.trim()}\n`;
-  }
-
-  return output;
-}
-
-/* ================================================
-   6. BASIC INPUT SANITIZATION
-================================================ */
+/* =================================================
+   6. SANITIZE
+================================================= */
 function sanitize(text = "") {
   return text
     .replace(/<script.*?>.*?<\/script>/gi, "")
@@ -95,43 +68,37 @@ function sanitize(text = "") {
     .trim();
 }
 
-/* ================================================
-   7. HEALTH CHECK (OPTIONAL BUT PRO)
-================================================ */
+/* =================================================
+   7. HEALTH CHECK
+================================================= */
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
     service: "Atharva AI Backend",
-    uptime: process.uptime(),
+    uptime: Math.floor(process.uptime()),
   });
 });
 
-/* ================================================
-   8. MAIN CHAT ENDPOINT
-   (THIS IS WHAT FRONTEND CALLS)
-================================================ */
+/* =================================================
+   8. CHAT ENDPOINT
+================================================= */
 app.post("/chat", async (req, res) => {
   try {
-    /* ---------- Validate Request ---------- */
-    const userMessageRaw = req.body?.message;
-    const systemPromptRaw = req.body?.system;
+    const { message, system } = req.body;
 
-    if (!userMessageRaw || typeof userMessageRaw !== "string") {
+    if (!message || typeof message !== "string") {
       return res.status(400).json({
-        reply: "## ⚠️ Invalid Request\n- Message missing or invalid",
+        reply: "Invalid request",
       });
     }
 
-    const userMessage = sanitize(userMessageRaw);
-    const systemPrompt = systemPromptRaw ? sanitize(systemPromptRaw) : null;
+    const userMessage = sanitize(message);
+    const systemPrompt = system ? sanitize(system) : null;
 
-    /* ---------- Save User Message ---------- */
-    pushToMemory("user", userMessage);
+    pushMemory("user", userMessage);
 
-    /* ---------- Build Messages for AI ---------- */
     const messages = [];
 
-    // 🔥 CRITICAL: frontend controls system prompt
     if (systemPrompt) {
       messages.push({
         role: "system",
@@ -139,65 +106,47 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    // Short memory (context)
     messages.push(...chatMemory);
 
-    /* ---------- AI CALL ---------- */
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       temperature: 0.45,
-      max_tokens: 900,
-      top_p: 0.9,
+      max_tokens: 800,
       messages,
     });
 
-    let aiReply =
+    const reply =
       completion?.choices?.[0]?.message?.content ||
-      "## ⚠️ AI Error\n- Empty response received";
+      "AI failed to respond";
 
-    /* ---------- Enforce Structure ---------- */
-    aiReply = enforceMarkdownStructure(aiReply);
+    pushMemory("assistant", reply);
 
-    /* ---------- Save AI Reply ---------- */
-    pushToMemory("assistant", aiReply);
+    res.json({ reply });
 
-    /* ---------- Send Response ---------- */
-    return res.json({
-      reply: aiReply,
-    });
-
-  } catch (error) {
-    console.error("❌ CHAT ERROR:", error);
-
-    return res.status(500).json({
-      reply: `
-## ❌ Server Error
-- AI backend temporarily unavailable
-- Please click **Retry**
-      `,
+  } catch (err) {
+    console.error("❌ CHAT ERROR:", err);
+    res.status(500).json({
+      reply: "Server error. Please retry.",
     });
   }
 });
 
-/* ================================================
-   9. GLOBAL ERROR HANDLER (SAFETY)
-================================================ */
+/* =================================================
+   9. GLOBAL ERROR HANDLER
+================================================= */
 app.use((err, req, res, next) => {
-  console.error("🔥 Unhandled Error:", err);
-  res.status(500).json({
-    reply: "## ❌ Unexpected Server Error\n- Please try again later",
-  });
+  console.error("🔥 UNHANDLED:", err);
+  res.status(500).json({ reply: "Unexpected server error" });
 });
 
-/* ================================================
-   10. SERVER START
-================================================ */
+/* =================================================
+   10. START SERVER (RENDER SAFE)
+================================================= */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("=====================================");
-  console.log(`✅ AI Backend Running`);
-  console.log(`🌍 URL: http://localhost:${PORT}`);
-  console.log(`🤖 Model: LLaMA 3.1`);
-  console.log("=====================================");
+  console.log("====================================");
+  console.log("✅ Atharva AI Backend LIVE");
+  console.log(`🌍 Port: ${PORT}`);
+  console.log("====================================");
 });
