@@ -1256,15 +1256,18 @@ async function getAIResponse(userMessage) {
         // INTEGRATION: DUAL BRAIN PROMPT
         const systemPrompt = INTELLIGENCE_ENGINE.buildSystemPrompt(userMessage);
 
-        const res = await fetch("http://localhost:3000/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                message: safeMessage,
-                system: systemPrompt 
-            }),
-            signal: controller.signal
-        });
+        const res = await fetch("https://portfolio-ai-eznv.onrender.com/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    message: safeMessage,
+    system: systemPrompt
+  }),
+  signal: controller.signal
+});
+
         
         clearTimeout(timeoutId);
         
