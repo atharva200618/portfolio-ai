@@ -89,7 +89,7 @@ background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='ht
 pointer-events: none; z-index: var(--z-content); opacity: 0.4;
 }
 
-/* --- SCROLL PROGRESS BAR (NEW) --- */
+/* --- SCROLL PROGRESS BAR --- */
 .scroll-progress {
     position: fixed; top: 0; left: 0; height: 3px; background: var(--accent-glow);
     width: 0%; z-index: 10001; transition: width 0.1s linear;
@@ -183,7 +183,38 @@ white-space: pre-wrap;
 align-self: flex-end; background: rgba(255, 255, 255, 0.05); border-left: none; border-right: 3px solid rgba(255, 255, 255, 0.3);
 animation: slideInRight 0.4s;
 }
-.message-bubble.error { border-left-color: #ff5f56; background: rgba(255, 95, 86, 0.05); }
+
+/* --- ENHANCED STATES --- */
+.message-bubble.thinking {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 255, 157, 0.02);
+    border-left-color: rgba(0, 255, 157, 0.3);
+}
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+.message-bubble.error {
+    background: rgba(255, 95, 86, 0.1);
+    border-left-color: #ff5f56;
+    color: #ffcccc;
+}
+.retry-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.retry-btn:hover { background: #ff5f56; border-color: #ff5f56; }
 
 /* --- MARKDOWN STYLING INSIDE CHAT --- */
 .message-bubble p { margin-bottom: 10px; }
@@ -210,6 +241,97 @@ border: 1px solid var(--glass-border); border-bottom: none; border-radius: 8px 8
 }
 .suggestion-item { padding: 8px 12px; cursor: pointer; color: #ccc; font-family: 'Courier New', monospace; font-size: 0.85rem; transition: 0.2s; }
 .suggestion-item:hover, .suggestion-item.active { background: rgba(0, 255, 157, 0.1); color: var(--accent-glow); }
+
+/* --- ADDED: VOICE UI STYLES --- */
+.voice-controls-wrapper {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    display: flex;
+    align-items: center;
+    z-index: 20;
+}
+
+.voice-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.voice-btn:hover {
+    color: var(--accent-glow);
+    border-color: var(--accent-glow);
+    background: rgba(0, 255, 157, 0.1);
+}
+
+/* Active: Listening State */
+.voice-btn.listening {
+    color: #ff5f56;
+    border-color: #ff5f56;
+    animation: pulse-mic 1.5s infinite;
+    background: rgba(255, 95, 86, 0.1);
+}
+
+/* Active: Speaking State */
+.voice-btn.speaking {
+    color: var(--accent-glow);
+    border-color: var(--accent-glow);
+    animation: wave-mic 1s infinite;
+}
+
+@keyframes pulse-mic {
+    0% { box-shadow: 0 0 0 0 rgba(255, 95, 86, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 95, 86, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 95, 86, 0); }
+}
+
+@keyframes wave-mic {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Voice Settings Dropdown */
+.voice-settings-dropdown {
+    position: absolute;
+    bottom: 50px;
+    right: 0;
+    background: rgba(10, 10, 12, 0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 10px;
+    width: 150px;
+    backdrop-filter: blur(10px);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+}
+
+.voice-setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.voice-setting-row label {
+    margin-right: 8px;
+}
+
+.voice-setting-row input[type="range"] {
+    width: 60px;
+    accent-color: var(--accent-glow);
+}
 
 /* --- Neural Network --- */
 .neural-container { width: 100%; height: 550px; position: relative; border-radius: 20px; overflow: hidden; background: radial-gradient(circle at center, rgba(0,255,157,0.03) 0%, transparent 70%); }
@@ -370,21 +492,30 @@ nav { top: 0; left: 0; right: 0; width: 100%; border-radius: 0; padding: 15px 20
 .cursor { display: none !important; }
 }
 
-/* --- MOBILE KEYBOARD ADJUSTMENT (NEW) --- */
+/* --- MOBILE KEYBOARD ADJUSTMENT --- */
 @media (max-width: 768px) {
+    .command-input {
+        font-size: 16px !important; /* Prevents iOS zoom */
+    }
+    
+    /* Dynamic class handled by JS */
     .chat-window.keyboard-open {
-        height: 40vh; /* Adjust height when keyboard is up */
+        height: 40vh; 
         transform: translateY(0);
+        position: fixed;
+        bottom: 0;
+        z-index: 9999;
+        width: 100%;
+        border-radius: 12px 12px 0 0;
     }
     .hero.keyboard-active {
-        align-items: flex-start;
         padding-top: 80px;
     }
 }
 </style>
 </head>
 <body>
-<!-- Scroll Progress Bar (NEW) -->
+<!-- Scroll Progress Bar -->
 <div class="scroll-progress" id="scroll-progress"></div>
 
 <!-- Background Effects -->
@@ -432,7 +563,7 @@ nav { top: 0; left: 0; right: 0; width: 100%; border-radius: 0; padding: 15px 20
 <div class="chat-header">
 <div class="chat-title">
 <div class="status-dot"></div>
-<span>AI Assistant v4.5</span>
+<span>AI Assistant v6.0</span>
 </div>
 <div class="window-controls">
 <div class="control-dot min" title="Minimize"></div>
@@ -447,7 +578,23 @@ nav { top: 0; left: 0; right: 0; width: 100%; border-radius: 0; padding: 15px 20
 <div class="suggestions-box" id="suggestions"></div>
 <div class="command-input-wrapper">
 <span class="command-prompt">></span>
-<input type="text" class="command-input" id="command-input" placeholder="Type /help to see available commands..." autocomplete="off" data-cursor="terminal">
+<input type="text" class="command-input" id="command-input" placeholder="Ask about projects, skills, or type /help..." autocomplete="off" data-cursor="terminal">
+</div>
+<!-- ADDED: VOICE CONTROLS -->
+<div class="voice-controls-wrapper">
+    <button id="mic-btn" class="voice-btn" aria-label="Voice Input" data-cursor="hover">
+        <i class="fas fa-microphone"></i>
+    </button>
+    
+    <div id="voice-settings" class="voice-settings-dropdown" style="display:none;">
+        <div class="voice-setting-row">
+            <label><i class="fas fa-volume-up"></i> Speed</label>
+            <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        <div class="voice-setting-row">
+            <button id="toggle-mute" class="btn-small">Mute Output</button>
+        </div>
+    </div>
 </div>
 </div>
 </div>
@@ -701,11 +848,282 @@ window.scrollTo(0, state.scrollY);
 }
 
 // ==========================================
-// 2. AI ASSISTANT INTELLIGENCE (NEW)
+// 2. DUAL-BRAIN: PORTFOLIO KNOWLEDGE BASE
+// ==========================================
+const PORTFOLIO_KNOWLEDGE_BASE = {
+    name: "Atharva Upadhyay",
+    role: "Data Analyst & AI/ML Student",
+    education: "2nd Year BTech CSE (AI & ML), VIT Vellore",
+    skills: {
+        core: ["Python", "SQL", "Power BI", "Pandas", "NumPy"],
+        learning: ["Tableau", "Git", "NLP", "Deep Learning"]
+    },
+    projects: [
+        {
+            keywords: ["student performance", "prediction", "academic"],
+            name: "Student Performance Prediction",
+            data: {
+                problem: "Predicting student academic outcomes for early intervention.",
+                dataset: "10,000+ student records (Kaggle).",
+                model: "Logistic Regression & Random Forest.",
+                result: "Improved accuracy from 71% to 85%."
+            }
+        },
+        {
+            keywords: ["sales", "dashboard", "power bi", "analytics"],
+            name: "Sales Analytics Dashboard",
+            data: {
+                problem: "Tracking regional sales performance efficiently.",
+                dataset: "Internal SQL Server data.",
+                model: "N/A (Business Intelligence tool).",
+                result: "Optimized query load time by 40%."
+            }
+        },
+        {
+            keywords: ["churn", "customer", "xgboost", "retention"],
+            name: "Customer Churn Prediction",
+            data: {
+                problem: "Identifying at-risk customers to reduce attrition.",
+                dataset: "Telecom customer data.",
+                model: "XGBoost Classifier.",
+                result: "Achieved 82% AUC-ROC Score."
+            }
+        }
+    ]
+};
+
+// ==========================================
+// 3. DUAL-BRAIN: INTELLIGENCE ENGINE
+// ==========================================
+const INTELLIGENCE_ENGINE = {
+    
+    isMute: false,
+    speechRate: 1,
+    isMockInterview: false,
+    interviewCount: 0,
+    
+    // 1. INTENT DETECTION
+    detectIntent: (text) => {
+        text = text.toLowerCase();
+        
+        // Portfolio Brain Triggers
+        if (text.match(/project|work|experience|portfolio|dataset|accuracy|churn|sales|student/i)) {
+            return { type: 'portfolio', confidence: 0.9 };
+        }
+        if (text.match(/skill|stack|language|tool|python|sql|bi/i)) {
+            return { type: 'portfolio', confidence: 0.8 };
+        }
+        if (text.match(/resume|education|vit|college|btech|year/i)) {
+            return { type: 'portfolio', confidence: 0.9 };
+        }
+        
+        // Interview Mode Triggers
+        if (text.match(/mock interview|interview me|ask question|prep/i)) {
+            INTELLIGENCE_ENGINE.isMockInterview = true;
+            INTELLIGENCE_ENGINE.interviewCount = 0;
+            return { type: 'interview', confidence: 0.95 };
+        }
+
+        // Resume Explainer Triggers
+        if (text.match(/explain my resume|review cv|strengths|improve profile/i)) {
+            return { type: 'resume_review', confidence: 0.9 };
+        }
+
+        // General Brain (Default)
+        return { type: 'general', confidence: 0.5 };
+    },
+
+    // 2. PROMPT BUILDER (The "Dual Brain" Logic)
+    buildSystemPrompt: (userText) => {
+        const intent = INTELLIGENCE_ENGINE.detectIntent(userText);
+        const persona = `You are ${PORTFOLIO_KNOWLEDGE_BASE.name}, a ${PORTFOLIO_KNOWLEDGE_BASE.role}.
+        Tone: Professional, Friendly, Honest, Hinglish (light mix).
+        Format: Always use Markdown (Headings, Bullet Points). Never reply in a single paragraph.
+        `;
+
+        // --- BRAIN 1: PORTFOLIO MODE ---
+        if (intent.type === 'portfolio') {
+            // Identify Project Deep-Dive
+            let projectContext = "";
+            PORTFOLIO_KNOWLEDGE_BASE.projects.forEach(proj => {
+                if (userText.toLowerCase().includes(proj.name.toLowerCase()) || 
+                    proj.keywords.some(k => userText.toLowerCase().includes(k))) {
+                    projectContext = `
+                    CURRENT FOCUS: ${proj.name}.
+                    PROBLEM: ${proj.data.problem}
+                    DATASET: ${proj.data.dataset}
+                    MODEL: ${proj.data.model}
+                    RESULT: ${proj.data.result}
+                    `;
+                }
+            });
+
+            return `${persona}
+            CONTEXT: You are talking about your Portfolio.
+            VERIFIED DATA:
+            - Education: ${PORTFOLIO_KNOWLEDGE_BASE.education}
+            - Skills: ${PORTFOLIO_KNOWLEDGE_BASE.skills.core.join(', ')}
+            ${projectContext}
+            
+            SAFETY: If user asks about experience not listed above, say you are a student working on it. DO NOT HALLUCINATE ROLES.
+            `;
+        }
+
+        // --- BRAIN 2: MOCK INTERVIEW MODE ---
+        if (intent.type === 'interview') {
+            return `${persona}
+            MODE: Technical Interviewer.
+            TASK: Ask ONE specific Data Analyst or ML interview question.
+            Wait for the user's answer.
+            Then provide brief, constructive feedback.
+            Topics: SQL, Python Pandas, Probability, ML Algorithms.
+            `;
+        }
+
+        // --- BRAIN 3: RESUME REVIEW MODE ---
+        if (intent.type === 'resume_review') {
+            return `${persona}
+            MODE: Career Coach.
+            TASK: Analyze resume of ${PORTFOLIO_KNOWLEDGE_BASE.name}.
+            Highlight strengths based on ${PORTFOLIO_KNOWLEDGE_BASE.skills.core}.
+            Suggest 1 improvement for a student resume.
+            Be motivating but honest.
+            `;
+        }
+
+        // --- BRAIN 4: GENERAL CHATGPT MODE ---
+        return `${persona}
+        MODE: Mentor & General Assistant.
+        You can answer general questions about Data Science, AI, Career Advice, and Coding.
+        Be helpful and structured.
+        `;
+    }
+};
+
+// ==========================================
+// 4. DUAL-BRAIN: VOICE ENGINE
+// ==========================================
+const VOICE_ENGINE = {
+    recognition: null,
+    synthesis: window.speechSynthesis,
+    voices: [],
+    
+    init: () => {
+        // Text to Speech Setup
+        VOICE_ENGINE.populateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = VOICE_ENGINE.populateVoices;
+        }
+
+        // Speech to Text Setup
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            VOICE_ENGINE.recognition = new SpeechRecognition();
+            VOICE_ENGINE.recognition.continuous = false;
+            VOICE_ENGINE.recognition.lang = 'en-US';
+            VOICE_ENGINE.recognition.interimResults = false;
+
+            VOICE_ENGINE.recognition.onstart = () => {
+                const btn = document.getElementById('mic-btn');
+                btn.classList.add('listening');
+                btn.classList.remove('speaking');
+            };
+
+            VOICE_ENGINE.recognition.onend = () => {
+                const btn = document.getElementById('mic-btn');
+                btn.classList.remove('listening');
+            };
+
+            VOICE_ENGINE.recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                elements.chatInput.value = transcript;
+                // Auto-submit voice command
+                window.executeCommand(transcript);
+            };
+
+            VOICE_ENGINE.recognition.onerror = (event) => {
+                console.warn('Voice Error:', event.error);
+                const btn = document.getElementById('mic-btn');
+                btn.classList.remove('listening');
+            };
+
+            // Bind Button
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.onclick = () => {
+                if (micBtn.classList.contains('listening')) {
+                    VOICE_ENGINE.recognition.stop();
+                } else {
+                    VOICE_ENGINE.recognition.start();
+                }
+            };
+
+        } else {
+            document.getElementById('mic-btn').style.display = 'none'; // Hide if not supported
+        }
+
+        // Settings UI Bindings
+        document.getElementById('toggle-mute').onclick = function() {
+            INTELLIGENCE_ENGINE.isMute = !INTELLIGENCE_ENGINE.isMute;
+            this.innerText = INTELLIGENCE_ENGINE.isMute ? "Unmute Output" : "Mute Output";
+            if(INTELLIGENCE_ENGINE.isMute) VOICE_ENGINE.synthesis.cancel();
+        };
+
+        document.getElementById('speech-rate').oninput = function() {
+            INTELLIGENCE_ENGINE.speechRate = parseFloat(this.value);
+        };
+        
+        // Settings Toggle
+        document.getElementById('mic-btn').oncontextmenu = (e) => {
+            e.preventDefault();
+            const settings = document.getElementById('voice-settings');
+            settings.style.display = settings.style.display === 'none' ? 'flex' : 'none';
+        };
+    },
+
+    populateVoices: () => {
+        VOICE_ENGINE.voices = VOICE_ENGINE.synthesis.getVoices();
+    },
+
+    speak: (text) => {
+        if (INTELLIGENCE_ENGINE.isMute) return;
+        
+        // Cancel previous speech (User打断 support)
+        VOICE_ENGINE.synthesis.cancel();
+
+        // Clean text for speech (remove markdown symbols)
+        const cleanText = text.replace(/[#*_`-]/g, '');
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        
+        // Try to find a decent English voice
+        const preferredVoice = VOICE_ENGINE.voices.find(v => v.lang.includes('en-US') && !v.name.includes('Google'));
+        if (preferredVoice) utterance.voice = preferredVoice;
+        
+        utterance.rate = INTELLIGENCE_ENGINE.speechRate;
+        utterance.pitch = 1;
+
+        utterance.onstart = () => {
+            const btn = document.getElementById('mic-btn');
+            btn.classList.add('speaking');
+        };
+
+        utterance.onend = () => {
+            const btn = document.getElementById('mic-btn');
+            btn.classList.remove('speaking');
+        };
+
+        VOICE_ENGINE.synthesis.speak(utterance);
+    }
+};
+
+// Initialize Voice Engine immediately
+VOICE_ENGINE.init();
+
+// ==========================================
+// 5. AI FORMATTING & MEMORY
 // ==========================================
 const aiConfig = {
-    memoryLimit: 3,
-    chatHistory: [],
+    memoryLimit: 5,
     ownerName: "Atharva",
     fallbackResponses: {
         "project": "Atharva has worked on Student Performance Prediction and Sales Dashboards. Would you like to see the code?",
@@ -729,186 +1147,235 @@ function sanitizeInput(str) {
     return temp.innerHTML;
 }
 
-function updateChatHistory(role, text) {
-    aiConfig.chatHistory.push({ role, text });
-    if (aiConfig.chatHistory.length > aiConfig.memoryLimit) {
-        aiConfig.chatHistory.shift();
+function formatAIResponse(rawText) {
+    if (!rawText) return "";
+    let safeText = rawText.replace(/<script[^>]*?>.*?<\/script>/gi, "[Script Removed]");
+    const hasMarkdown = /^(#{1,6}\s|-\s|\*\s|\d+\.\s)/m.test(safeText);
+    if (!hasMarkdown && safeText.length > 100) {
+        const sentences = safeText.match(/[^\.!\?]+[\.!\?]+/g) || [safeText];
+        if (sentences.length > 0) sentences[0] = `**${sentences[0].trim()}**`;
+        safeText = sentences.join('\n\n');
+    }
+    try { return marked.parse(safeText); } catch (e) { return safeText.replace(/\n/g, '<br>'); }
+}
+
+function saveChatHistory() {
+    if(elements.chatBody) {
+        const history = [];
+        elements.chatBody.querySelectorAll('.message-bubble').forEach(bubble => {
+            history.push({ type: bubble.classList.contains('user') ? 'user' : 'ai', text: bubble.innerText });
+        });
+        if(history.length > aiConfig.memoryLimit) history.splice(0, history.length - aiConfig.memoryLimit);
+        sessionStorage.setItem('atharva_chat_memory', JSON.stringify(history));
     }
 }
 
-function getSmartOfflineResponse(input) {
-    const lowerInput = input.toLowerCase();
-    for (const key in aiConfig.fallbackResponses) {
-        if (lowerInput.includes(key)) return aiConfig.fallbackResponses[key];
+function loadChatHistory() {
+    const saved = sessionStorage.getItem('atharva_chat_memory');
+    if (saved) {
+        const history = JSON.parse(saved);
+        history.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `message-bubble ${msg.type}`;
+            div.setAttribute('role', 'article');
+            div.setAttribute('aria-live', 'polite');
+            div.innerHTML = marked.parse(msg.text); 
+            elements.chatBody.appendChild(div);
+        });
+        elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
     }
-    return aiConfig.fallbackResponses.default;
-}
-
-function getContextualAction() {
-    const scrollPos = window.scrollY + window.innerHeight / 2;
-    const about = document.getElementById('about');
-    const work = document.getElementById('work');
-    const contact = document.getElementById('contact');
-
-    if (!about || !work || !contact) return "Explore the sections below.";
-
-    if (scrollPos >= about.offsetTop && scrollPos < work.offsetTop) {
-        return "Want to know more about his background?";
-    } else if (scrollPos >= work.offsetTop && scrollPos < contact.offsetTop) {
-        return "Interested in the code behind these projects?";
-    } else if (scrollPos >= contact.offsetTop) {
-        return "Ready to collaborate?";
-    }
-    return "Type /help to start.";
 }
 
 // ==========================================
-// 3. CHAT SYSTEM LOGIC (UPDATED)
+// 6. CHAT SYSTEM LOGIC (FULLY UPGRADED)
 // ==========================================
 const commands = ['/help', '/about', '/skills', '/projects', '/contact', '/resume', '/blog', '/matrix', '/hack', '/coffee', '/konami'];
 
-// Dynamic Initial Messages
 const initialMessages = [
     { type: 'ai', text: `${getTimeBasedGreeting()}! I'm Atharva's AI assistant.` },
     { type: 'ai', text: "I can guide you through his Data Science projects and skills." },
-    { type: 'ai', text: `Context: ${getContextualAction()}` }
+    { type: 'ai', text: "Ask anything, say 'Start Interview', or use commands." }
 ];
 
-function addMessage(type, text) {
-const div = document.createElement('div');
-div.className = `message-bubble ${type}`;
-div.setAttribute('role', 'article'); 
-div.setAttribute('aria-live', 'polite');
+function addMessage(type, text, isRaw = false) {
+    const div = document.createElement('div');
+    div.className = `message-bubble ${type}`;
+    div.setAttribute('role', 'article'); 
+    div.setAttribute('aria-live', 'polite');
 
-// Use marked.js for AI messages
-if (type === 'ai' && typeof marked !== 'undefined') {
-    div.innerHTML = marked.parse(text);
-} else {
-    div.textContent = text;
-}
+    if (type === 'ai') {
+        if (isRaw) div.innerHTML = formatAIResponse(text);
+        else div.innerHTML = marked.parse(text);
+    } else {
+        div.textContent = text; 
+    }
 
-elements.chatBody.appendChild(div);
-elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
-updateChatHistory(type, text); // Add to memory
-}
-
-function typeWriter(text, callback) {
-const div = document.createElement('div');
-div.className = 'message-bubble ai';
-elements.chatBody.appendChild(div);
-let i = 0;
-elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
-const interval = setInterval(() => {
-div.textContent += text[i];
-i++;
-elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
-if (i >= text.length) {
-clearInterval(interval);
-if (callback) callback();
-}
-}, 20);
-}
-
-function showTyping() {
-const div = document.createElement('div');
-div.id = 'typing-indicator';
-div.className = 'message-bubble ai';
-div.innerHTML = '<span style="animation: pulse 1s infinite">...</span>';
-elements.chatBody.appendChild(div);
-elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
-}
-
-function hideTyping() {
-const el = document.getElementById('typing-indicator');
-if (el) el.remove();
-}
-
-// Robust AI Response Handler
-async function getAIResponse(userMessage) {
-try {
-    const safeMessage = sanitizeInput(userMessage);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
-
-    const res = await fetch("http://localhost:3000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: safeMessage }),
-        signal: controller.signal
+    elements.chatBody.appendChild(div);
+    
+    requestAnimationFrame(() => {
+        elements.chatBody.scrollTo({ top: elements.chatBody.scrollHeight, behavior: 'smooth' });
     });
     
-    clearTimeout(timeoutId);
-    
-    if (!res.ok) throw new Error("Server error");
-    
-    const data = await res.json();
-    return data.reply;
-    
-} catch (error) {
-    console.warn("AI Backend Offline, using Smart Fallback:", error);
-    return getSmartOfflineResponse(userMessage);
-}
+    saveChatHistory();
 }
 
-window.executeCommand = function(cmd) {
+function smartTypeWriter(text, callback) {
+    const div = document.createElement('div');
+    div.className = 'message-bubble ai';
+    div.setAttribute('role', 'article');
+    elements.chatBody.appendChild(div);
+    
+    let i = 0;
+    const speed = 15; 
+    
+    function type() {
+        if (i < text.length) {
+            div.textContent += text.charAt(i);
+            i++;
+            elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
+            setTimeout(type, speed);
+        } else {
+            div.style.opacity = '0.5';
+            setTimeout(() => {
+                div.innerHTML = formatAIResponse(text);
+                div.style.opacity = '1';
+                div.style.transition = 'opacity 0.3s';
+                if (callback) callback();
+            }, 100);
+        }
+    }
+    type();
+}
+
+async function getAIResponse(userMessage) {
+    try {
+        const safeMessage = sanitizeInput(userMessage);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); 
+
+        // INTEGRATION: DUAL BRAIN PROMPT
+        const systemPrompt = INTELLIGENCE_ENGINE.buildSystemPrompt(userMessage);
+
+        const res = await fetch("http://localhost:3000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                message: safeMessage,
+                system: systemPrompt 
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) throw new Error("Server error");
+        
+        const data = await res.json();
+        return data.reply;
+        
+    } catch (error) {
+        console.warn("AI Error:", error);
+        return null; // Triggers fallback
+    }
+}
+
+window.executeCommand = async function(cmd) {
 const originalCmd = cmd;
 cmd = cmd.toLowerCase().trim();
+
 addMessage('user', originalCmd);
-showTyping();
+
+// Thinking State
+const thinkingId = 'thinking-' + Date.now();
+const thinkingDiv = document.createElement('div');
+thinkingDiv.id = thinkingId;
+thinkingDiv.className = 'message-bubble ai thinking';
+thinkingDiv.textContent = "AI is thinking...";
+elements.chatBody.appendChild(thinkingDiv);
+elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
+
+const removeThinking = () => {
+    const el = document.getElementById(thinkingId);
+    if(el) el.remove();
+};
 
 setTimeout(async () => {
-hideTyping();
-let response = "";
-let action = null;
+    removeThinking();
+    
+    if (cmd.startsWith('/')) {
+        let response = "";
+        let action = null;
+        let isMarkdown = false;
 
-if (cmd.startsWith('/')) {
-switch(cmd) {
-    case '/help':
-    response = "Available Commands:<br>/about - Learn about Atharva<br>/skills - View technical skills<br>/projects - Browse projects<br>/contact - Get contact info<br>/resume - Download resume<br>/blog - Read articles<br><br>Secrets: /matrix, /coffee";
-    break;
-    case '/about':
-    response = "Atharva is a 2nd year BTech CSE (AI & ML) student at VIT Vellore...";
-    action = () => document.getElementById('about').scrollIntoView({behavior:'smooth'});
-    break;
-    case '/skills':
-    response = "Core: Python, SQL, Power BI, ML<br>Learning: Tableau, Git, Advanced Stats";
-    action = () => document.querySelector('.skills-section').scrollIntoView({behavior:'smooth'});
-    break;
-    case '/projects':
-    response = "Scrolling down to Selected Work...";
-    action = () => document.getElementById('work').scrollIntoView({behavior:'smooth'});
-    break;
-    case '/contact':
-    response = "Opening contact details...";
-    action = () => document.getElementById('contact').scrollIntoView({behavior:'smooth'});
-    break;
-    case '/resume':
-    response = "Downloading resume...";
-    action = () => document.getElementById('resume-btn').click();
-    break;
-    case '/blog':
-    response = "Opening Blog Overlay...";
-    action = () => window.openBlog();
-    break;
-    case '/matrix':
-    triggerMatrix();
-    response = "Entering the Matrix...";
-    break;
-    case '/coffee':
-    response = "☕ Coffee is the most important meal of the day.";
-    break;
-    case '/hack':
-    response = "Initiating brute force... [ACCESS DENIED]. Just kidding.";
-    break;
-    default:
-    response = "Command not found. Type /help.";
-}
-typeWriter(response, action);
-} else {
-// Natural language (AI)
-const aiText = await getAIResponse(originalCmd);
-addMessage('ai', aiText); 
-}
+        switch(cmd) {
+            case '/help':
+            response = "**Available Commands:**\n- `/about` - About Atharva\n- `/skills` - Tech Stack\n- `/projects` - Case Studies\n- `/contact` - Hire him\n- `/blog` - Read articles\n- `/coffee` - For fun"; 
+            isMarkdown = true;
+            break;
+            case '/about':
+            response = "Atharva is a **2nd year BTech CSE (AI & ML)** student at VIT Vellore.\n\nHe specializes in turning raw data into actionable intelligence using Python, SQL, and Power BI.";
+            action = () => document.getElementById('about').scrollIntoView({behavior:'smooth'});
+            isMarkdown = true;
+            break;
+            case '/skills':
+            response = "**Core Skills:**\n- Python (Pandas, NumPy)\n- SQL (Advanced Joins)\n- Power BI (DAX)\n\n**Learning:**\n- Deep Learning\n- NLP";
+            action = () => document.querySelector('.skills-section').scrollIntoView({behavior:'smooth'});
+            isMarkdown = true;
+            break;
+            case '/projects':
+            response = "Checking out his **Selected Work** section...";
+            action = () => document.getElementById('work').scrollIntoView({behavior:'smooth'});
+            break;
+            case '/contact':
+            response = "Opening **Contact** details...";
+            action = () => document.getElementById('contact').scrollIntoView({behavior:'smooth'});
+            break;
+            case '/resume':
+            response = "Downloading **Resume**...";
+            action = () => document.getElementById('resume-btn').click();
+            break;
+            case '/blog':
+            response = "Opening **Blog** overlay...";
+            action = () => window.openBlog();
+            break;
+            case '/matrix':
+            triggerMatrix();
+            response = "Entering the Matrix... 🕶️";
+            break;
+            case '/coffee':
+            response = "☕ **Coffee** is fuel for all this code!";
+            isMarkdown = true;
+            break;
+            default:
+            response = "Command not found. Type `/help`.";
+        }
+
+        if (isMarkdown) {
+            addMessage('ai', response, true);
+            if(action) setTimeout(action, 800);
+        } else {
+            smartTypeWriter(response, action);
+        }
+
+    } else {
+        // Natural Language AI (Uses Dual Brain)
+        const aiText = await getAIResponse(originalCmd);
+        
+        if (aiText) {
+            smartTypeWriter(aiText);
+            
+            // INTEGRATION: VOICE OUTPUT
+            setTimeout(() => {
+                VOICE_ENGINE.speak(aiText);
+            }, 500); 
+        } else {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'message-bubble ai error';
+            errorDiv.innerHTML = `Server offline. <button class="retry-btn" onclick="window.executeCommand('${originalCmd}')">Retry</button>`;
+            elements.chatBody.appendChild(errorDiv);
+            elements.chatBody.scrollTop = elements.chatBody.scrollHeight;
+        }
+    }
 }, 600);
 };
 
@@ -949,17 +1416,20 @@ elements.suggestions.style.display = 'none';
 });
 
 // Initialize Chat
-setTimeout(() => {
-initialMessages.forEach((msg, idx) => {
-setTimeout(() => {
-if(idx === 2) typeWriter(msg.text);
-else addMessage(msg.type, msg.text);
-}, idx * 800);
-});
-}, 500);
+loadChatHistory();
+if(elements.chatBody.children.length === 0) {
+    setTimeout(() => {
+        initialMessages.forEach((msg, idx) => {
+            setTimeout(() => {
+                if(idx === 2) smartTypeWriter(msg.text);
+                else addMessage(msg.type, msg.text, true);
+            }, idx * 800);
+        });
+    }, 500);
+}
 
 // ==========================================
-// 4. NEURAL NETWORK VISUALIZATION
+// 7. NEURAL NETWORK VISUALIZATION
 // ==========================================
 function initNeuralNet() {
 if (!elements.neuralCanvas) return;
@@ -988,9 +1458,8 @@ nextLayerNodes.forEach(target => {
 connections.push({ from: node, to: target, active: Math.random() > 0.8 });
 });
 });
-
 function animate() {
-if(!state.isAnimating) return requestAnimationFrame(animate); // Performance check
+if(!state.isAnimating) return requestAnimationFrame(animate);
 ctx.clearRect(0, 0, width, height);
 
 connections.forEach(conn => {
@@ -1018,7 +1487,7 @@ animate();
 }
 
 // ==========================================
-// 5. MATRIX EASTER EGG
+// 8. MATRIX EASTER EGG
 // ==========================================
 function triggerMatrix() {
 state.matrixActive = !state.matrixActive;
@@ -1029,7 +1498,7 @@ elements.matrixCanvas.width = window.innerWidth; elements.matrixCanvas.height = 
 const chars = "0101010101XYZ"; const fontSize = 14; const columns = elements.matrixCanvas.width / fontSize;
 const drops = Array(Math.floor(columns)).fill(1);
 function drawMatrix() {
-if(!state.isAnimating) return requestAnimationFrame(drawMatrix); // Performance check
+if(!state.isAnimating) return requestAnimationFrame(drawMatrix);
 ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, elements.matrixCanvas.width, elements.matrixCanvas.height);
 ctx.fillStyle = "#0F0"; ctx.font = fontSize + "px monospace";
 for (let i = 0; i < drops.length; i++) {
@@ -1045,16 +1514,16 @@ drawMatrix();
 }
 
 // ==========================================
-// 6. SCROLL PROGRESS & SPY (NEW)
+// 9. SCROLL PROGRESS & SPY
 // ==========================================
 window.addEventListener('scroll', () => {
-    // Update Progress Bar
+    // Progress Bar
     const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
     const scrolled = (winScroll / height) * 100;
     elements.scrollProgress.style.width = scrolled + "%";
 
-    // Update Scroll Spy (Active Nav Link)
+    // Spy
     let current = "";
     elements.sections.forEach(section => {
         const sectionTop = section.offsetTop;
@@ -1072,7 +1541,7 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ==========================================
-// 7. CURSOR & INTERACTION
+// 10. CURSOR & INTERACTION
 // ==========================================
 if (!state.isTouch && window.matchMedia("(pointer: fine)").matches) {
 elements.cursor.style.display = 'block'; elements.cursorDot.style.display = 'block';
@@ -1105,7 +1574,7 @@ elements.cursor.classList.remove('hovered'); elements.cursor.classList.remove('c
 }
 
 // ==========================================
-// 8. FLOATING CODE
+// 11. FLOATING CODE
 // ==========================================
 function createFloatingCode() {
 const snippets = ["import pandas", "model.fit()", "SELECT * FROM", "np.array()", "plt.plot()", "class Net:"];
@@ -1113,7 +1582,7 @@ const el = document.createElement('div'); el.className = 'floating-code'; el.inn
 el.style.left = Math.random() * 100 + 'vw'; el.style.top = '100vh'; el.style.opacity = 0.03; document.body.appendChild(el);
 let pos = window.innerHeight;
 function animateCode() {
-if(!state.isAnimating) return requestAnimationFrame(animateCode); // Performance check
+if(!state.isAnimating) return requestAnimationFrame(animateCode);
 pos -= 0.5; el.style.top = pos + 'px';
 if(pos < -50) { el.remove(); } else { requestAnimationFrame(animateCode); }
 }
@@ -1122,7 +1591,7 @@ animateCode();
 setInterval(createFloatingCode, 2000);
 
 // ==========================================
-// 9. PERFORMANCE: VISIBILITY API (NEW)
+// 12. PERFORMANCE: VISIBILITY API
 // ==========================================
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
@@ -1133,26 +1602,37 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // ==========================================
-//10. MOBILE KEYBOARD VISUAL VIEWPORT FIX (NEW)
+// 13. ROBUST MOBILE KEYBOARD HANDLING
 // ==========================================
 if (window.visualViewport) {
     const chatWindow = document.querySelector('.chat-window');
     const heroSection = document.querySelector('.hero');
     
     window.visualViewport.addEventListener('resize', () => {
-        // When keyboard opens, visual viewport shrinks
-        if (window.visualViewport.height < window.innerHeight) {
-            if(chatWindow) chatWindow.classList.add('keyboard-open');
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        
+        // Detect keyboard
+        if (viewportHeight < windowHeight * 0.85) {
+            if(chatWindow) {
+                chatWindow.classList.add('keyboard-open');
+                chatWindow.style.position = 'fixed'; 
+                chatWindow.style.bottom = '0';
+            }
             if(heroSection) heroSection.classList.add('keyboard-active');
         } else {
-            if(chatWindow) chatWindow.classList.remove('keyboard-open');
+            if(chatWindow) {
+                chatWindow.classList.remove('keyboard-open');
+                chatWindow.style.position = 'relative';
+                chatWindow.style.bottom = 'auto';
+            }
             if(heroSection) heroSection.classList.remove('keyboard-active');
         }
     });
 }
 
 // ==========================================
-//11. MOBILE MENU
+// 14. MOBILE MENU
 // ==========================================
 window.toggleMenu = function() {
 const isExpanded = elements.menuToggle.getAttribute('aria-expanded') === 'true';
@@ -1160,7 +1640,7 @@ elements.navLinks.classList.toggle('active'); elements.menuToggle.setAttribute('
 };
 
 // ==========================================
-//12. BLOG & ARTICLE LOGIC
+// 15. BLOG & ARTICLE LOGIC
 // ==========================================
 window.openBlog = function(e) {
 if(e) e.preventDefault(); toggleScrollLock(true); elements.blogOverlay.style.display = 'block';
@@ -1199,7 +1679,7 @@ else if (window.innerWidth <= 1024 && elements.navLinks.classList.contains('acti
 });
 
 // ==========================================
-//13. RESUME GENERATOR
+// 16. RESUME GENERATOR
 // ==========================================
 const resumeBtn = document.getElementById('resume-btn');
 const resumeContent = `ATHARVA UPADHYAY\nData Analyst | AI/ML Student\n\nPROFILE\nBTech CSE (AI & ML) student at VIT Vellore with a strong foundation in Python, SQL, and Data Visualization.\n\nSKILLS\n- Python, SQL, Power BI, Excel\n- Pandas, NumPy, Scikit-learn\n- Machine Learning, Statistical Analysis\n\nPROJECTS\n1. Student Performance Prediction\n2. Sales Analytics Dashboard\n3. Customer Churn Prediction`;
@@ -1208,7 +1688,7 @@ resumeBtn.setAttribute("href", URL.createObjectURL(blob));
 resumeBtn.setAttribute("download", "Atharva_Resume.txt");
 
 // ==========================================
-//14. SCROLL REVEAL
+// 17. SCROLL REVEAL
 // ==========================================
 if ('IntersectionObserver' in window) {
 const observer = new IntersectionObserver((entries) => {
