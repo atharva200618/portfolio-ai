@@ -813,6 +813,9 @@ Currently seeking internship opportunities to apply my skills on real-world data
 
 <!-- ================= JAVASCRIPT ================= -->
 <script>
+    const API_URL = "https://portfolio-ai-eznv.onrender.com/chat";
+console.log("API_URL =", API_URL);
+
 document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 // 1. STATE & UTILITIES
@@ -1258,6 +1261,7 @@ async function getAIResponse(userMessage) {
 
         const res = await fetch("https://portfolio-ai-eznv.onrender.com/chat", {
   method: "POST",
+  mode: "cors",              // 👈 ADD THIS
   headers: {
     "Content-Type": "application/json"
   },
@@ -1267,6 +1271,7 @@ async function getAIResponse(userMessage) {
   }),
   signal: controller.signal
 });
+
 
         
         clearTimeout(timeoutId);
