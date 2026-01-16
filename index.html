@@ -1251,7 +1251,7 @@ async function getAIResponse(userMessage) {
     try {
         const safeMessage = sanitizeInput(userMessage);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); 
+        const timeoutId = setTimeout(() => controller.abort(), 25000); 
 
         // INTEGRATION: DUAL BRAIN PROMPT
         const systemPrompt = INTELLIGENCE_ENGINE.buildSystemPrompt(userMessage);
